@@ -6,5 +6,15 @@
   "repository": {
     "url": "https://github.com/jaimenbell/github-mcp",
     "source": "github"
-  }
+  },
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "jaimenbell-github-mcp",
+      "version": "0.1.0",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
 }

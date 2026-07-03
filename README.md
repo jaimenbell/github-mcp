@@ -168,3 +168,6 @@ pip install -r requirements.txt   # or: pip install .
 
 Registered in `~/.claude.json` as `github-mcp` (stdio, system Python312,
 `read` group always on, `write` group absent from env -- off).
+
+<!-- MCP registry ownership marker -->
+mcp-name: io.github.jaimenbell/github-mcp
