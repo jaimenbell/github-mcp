@@ -169,5 +169,10 @@ pip install -r requirements.txt   # or: pip install .
 Registered in `~/.claude.json` as `github-mcp` (stdio, system Python312,
 `read` group always on, `write` group absent from env -- off).
 
+
+## Commercial support
+
+Maintained by [Jaimen Bell](https://jaimenbell.dev). For production MCP integrations, custom servers, or agent-reliability work, see [jaimenbell.dev](https://jaimenbell.dev) or sponsor ongoing maintenance via [GitHub Sponsors](https://github.com/sponsors/jaimenbell).
+
 <!-- MCP registry ownership marker -->
 mcp-name: io.github.jaimenbell/github-mcp
