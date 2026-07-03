@@ -5,6 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "jaimenbell-github-mcp"
 version = "0.1.0"
+readme = "README.md"
 description = "Public read+write reference MCP server over the GitHub REST API. Env-gated tool groups (read always on, write off by default), fine-grained PAT auth that degrades to the unauthenticated tier, typed rate-limit/error payloads. Reference portfolio implementation, NOT the official GitHub MCP server."
 requires-python = ">=3.12"
 dependencies = [
