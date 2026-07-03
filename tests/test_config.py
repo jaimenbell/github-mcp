@@ -33,17 +33,6 @@ class TestGetToken:
         assert config.get_token() is None
 
 
-class TestMaskToken:
-    def test_masks_all_but_last_four(self):
-        assert config.mask_token("github_pat_abcdef1234") == "...1234"
-
-    def test_none_token(self):
-        assert config.mask_token(None) == "(none)"
-
-    def test_short_token_fully_masked(self):
-        assert config.mask_token("ab") == "**"
-
-
 class TestPolicyRefusal:
     def test_shape(self):
         result = config.policy_refusal(config.GROUP_WRITE, "create_issue")

@@ -53,16 +53,6 @@ def get_token() -> str | None:
     return token if token else None
 
 
-def mask_token(token: str | None) -> str:
-    """Masked representation safe to include in diagnostics -- last 4 chars
-    only, never the full token."""
-    if not token:
-        return "(none)"
-    if len(token) <= 4:
-        return "*" * len(token)
-    return f"...{token[-4:]}"
-
-
 def policy_refusal(group: str, tool: str) -> dict:
     """Structured refusal payload for a disabled tool group."""
     env_name = _ENV_GATES.get(group, f"GITHUB_MCP_ENABLE_{group.upper()}")
