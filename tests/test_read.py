@@ -145,6 +145,29 @@ class TestGetFileContent:
         assert result["binary"] is True
         assert result["content"] is None
 
+    @respx.mock
+    def test_unsupported_encoding_rejected(self):
+        """GitHub returns encoding='none' for blobs over ~1MB (content omitted
+        entirely) instead of base64 -- must refuse cleanly, not KeyError/crash."""
+        respx.get("https://api.github.com/repos/o/r/contents/huge.bin").mock(
+            return_value=httpx.Response(200, json={"path": "huge.bin", "size": 5_000_000, "encoding": "none"})
+        )
+        result = read.get_file_content("o", "r", "huge.bin")
+        assert result["ok"] is False
+        assert result["error"]["type"] == "unsupported_encoding"
+
+    @respx.mock
+    def test_content_over_max_bytes_is_truncated(self):
+        raw = b"x" * (read.MAX_FILE_BYTES + 500)
+        encoded = base64.b64encode(raw).decode()
+        respx.get("https://api.github.com/repos/o/r/contents/big.txt").mock(
+            return_value=httpx.Response(200, json={"path": "big.txt", "size": len(raw), "encoding": "base64", "content": encoded})
+        )
+        result = read.get_file_content("o", "r", "big.txt")
+        assert result["ok"] is True
+        assert result["truncated"] is True
+        assert len(result["content"]) == read.MAX_FILE_BYTES
+
 
 class TestSearchRepos:
     @respx.mock

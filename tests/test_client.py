@@ -76,6 +76,24 @@ class TestRateLimitError:
         assert result["error"]["type"] == "github_api_error"
         assert result["error"]["status_code"] == 403
 
+    @respx.mock
+    def test_secondary_rate_limit_no_ratelimit_headers_retry_after_only(self):
+        """GitHub's secondary (abuse-detection) rate limit: 403, no
+        X-RateLimit-* headers at all, just Retry-After. Must still classify
+        as rate_limited, not github_api_error."""
+        respx.post("https://api.github.com/repos/o/r/issues").mock(
+            return_value=httpx.Response(
+                403,
+                json={"message": "You have exceeded a secondary rate limit"},
+                headers={"Retry-After": "30"},
+            )
+        )
+        result = client.post("create_issue", "/repos/o/r/issues")
+        assert result["ok"] is False
+        assert result["error"]["type"] == "rate_limited"
+        assert result["error"]["retry_after_s"] == 30
+        assert result["error"]["reset_time"] is None
+
 
 class TestApiError:
     @respx.mock
@@ -130,6 +148,16 @@ class TestNetworkError:
     def test_timeout_is_typed_network_error(self):
         respx.get("https://api.github.com/repos/o/r").mock(side_effect=httpx.TimeoutException("timed out"))
         result = client.get("get_repo", "/repos/o/r")
+        assert result["ok"] is False
+        assert result["error"]["type"] == "network_error"
+
+    def test_malformed_path_raises_invalid_url_caught_as_network_error(self):
+        """httpx.InvalidURL is raised during URL construction (before any
+        network I/O) and does NOT subclass httpx.HTTPError -- a caller-
+        supplied owner/repo/path with control characters must still come
+        back as a typed error, never an uncaught exception. No respx.mock:
+        this must fail before any request is dispatched."""
+        result = client.get("get_repo", "/repos/o/r\r\nX-Injected: 1")
         assert result["ok"] is False
         assert result["error"]["type"] == "network_error"
 

@@ -16,8 +16,12 @@ WRITE_FN_ARGS = [
 
 
 class TestGateDisabledByDefault:
+    @respx.mock
     @pytest.mark.parametrize("fn,args", WRITE_FN_ARGS)
     def test_refused_when_write_disabled(self, fn, args):
+        """No route is registered on the respx mock -- if the gate ever lets
+        a call fall through to the network, respx raises instead of letting
+        the test pass on a coincidentally-shaped refusal dict."""
         result = fn(*args)
         assert result["ok"] is False
         assert result["error"]["type"] == "policy_refusal"
@@ -25,8 +29,11 @@ class TestGateDisabledByDefault:
 
 
 class TestAuthRequiredWhenGroupEnabled:
+    @respx.mock
     @pytest.mark.parametrize("fn,args", WRITE_FN_ARGS)
     def test_refused_when_no_token(self, fn, args, enable_write):
+        """Same no-route guard as above: group enabled but no token must
+        still refuse locally, never reach the network."""
         result = fn(*args)
         assert result["ok"] is False
         assert result["error"]["type"] == "auth_required"
@@ -64,6 +71,15 @@ class TestCommentOnIssue:
         assert result["ok"] is True
         assert result["id"] == 999
 
+    @respx.mock
+    def test_api_error_propagates(self, write_ready):
+        respx.post("https://api.github.com/repos/o/r/issues/5/comments").mock(
+            return_value=httpx.Response(404, json={"message": "Not Found"})
+        )
+        result = write.comment_on_issue("o", "r", 5, "nice catch")
+        assert result["ok"] is False
+        assert result["error"]["type"] == "github_api_error"
+
 
 class TestUpdateIssueState:
     @respx.mock
@@ -80,6 +96,15 @@ class TestUpdateIssueState:
         assert result["ok"] is False
         assert result["error"]["type"] == "invalid_input"
 
+    @respx.mock
+    def test_api_error_propagates(self, write_ready):
+        respx.patch("https://api.github.com/repos/o/r/issues/5").mock(
+            return_value=httpx.Response(410, json={"message": "Gone"})
+        )
+        result = write.update_issue_state("o", "r", 5, "closed")
+        assert result["ok"] is False
+        assert result["error"]["type"] == "github_api_error"
+
 
 class TestAddLabels:
     @respx.mock
@@ -91,6 +116,15 @@ class TestAddLabels:
         assert result["ok"] is True
         assert result["labels"] == ["bug", "priority"]
 
+    @respx.mock
+    def test_api_error_propagates(self, write_ready):
+        respx.post("https://api.github.com/repos/o/r/issues/5/labels").mock(
+            return_value=httpx.Response(404, json={"message": "Not Found"})
+        )
+        result = write.add_labels("o", "r", 5, ["bug"])
+        assert result["ok"] is False
+        assert result["error"]["type"] == "github_api_error"
+
 
 class TestCreatePrReviewComment:
     @respx.mock
@@ -101,3 +135,12 @@ class TestCreatePrReviewComment:
         result = write.create_pr_review_comment("o", "r", 8, "consider renaming", "sha123", "file.py", 10)
         assert result["ok"] is True
         assert result["id"] == 1234
+
+    @respx.mock
+    def test_api_error_propagates(self, write_ready):
+        respx.post("https://api.github.com/repos/o/r/pulls/8/comments").mock(
+            return_value=httpx.Response(422, json={"message": "Validation Failed"})
+        )
+        result = write.create_pr_review_comment("o", "r", 8, "consider renaming", "sha123", "file.py", 10)
+        assert result["ok"] is False
+        assert result["error"]["type"] == "github_api_error"

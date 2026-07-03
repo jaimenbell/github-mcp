@@ -2,11 +2,13 @@
 
 One function per HTTP verb used by the tool groups (get/post/patch). Auth
 header injection when a token is present; degrades to GitHub's unauthenticated
-60 req/hr tier otherwise. GitHub's 403 primary-rate-limit response and any
-4xx/5xx surface as clean typed error dicts (never a raw exception/crash),
-carrying the rate-limit reset time when GitHub provides one. A dedicated
-httpx.Client is created per call so tests can respx-mock deterministically
-without managing a shared client lifecycle across the process.
+60 req/hr tier otherwise. GitHub's 403 primary rate-limit response (hourly
+quota, X-RateLimit-Reset) and secondary rate-limit response (abuse-detection
+heuristics, Retry-After) both surface as a typed `rate_limited` error; any
+other 4xx/5xx surfaces as a typed `github_api_error` -- never a raw
+exception/crash. A dedicated httpx.Client is created per call so tests can
+respx-mock deterministically without managing a shared client lifecycle
+across the process.
 """
 from __future__ import annotations
 
@@ -35,18 +37,24 @@ def _headers() -> dict:
 def _rate_limit_error(tool: str, response: httpx.Response) -> dict:
     reset_header = response.headers.get("X-RateLimit-Reset")
     remaining = response.headers.get("X-RateLimit-Remaining")
+    retry_after = response.headers.get("Retry-After")
+    if reset_header:
+        message = f"GitHub API rate limit exceeded. Resets at unix time {reset_header}."
+    elif retry_after:
+        # GitHub's secondary rate limit: no X-RateLimit-* headers, just Retry-After.
+        message = f"GitHub API secondary rate limit exceeded. Retry after {retry_after}s."
+    else:
+        message = "GitHub API rate limit exceeded."
     return {
         "ok": False,
         "error": {
             "type": "rate_limited",
-            "message": (
-                "GitHub API rate limit exceeded. "
-                + (f"Resets at unix time {reset_header}." if reset_header else "")
-            ),
+            "message": message,
             "tool": tool,
             "status_code": response.status_code,
             "reset_time": int(reset_header) if reset_header and reset_header.isdigit() else None,
             "remaining": int(remaining) if remaining and remaining.isdigit() else None,
+            "retry_after_s": int(retry_after) if retry_after and retry_after.isdigit() else None,
         },
     }
 
@@ -69,10 +77,15 @@ def _api_error(tool: str, response: httpx.Response) -> dict:
 
 
 def _is_rate_limit_response(response: httpx.Response) -> bool:
+    """True for GitHub's primary rate limit (403 + X-RateLimit-Remaining: 0)
+    and its secondary rate limit (403 + Retry-After, no X-RateLimit-Remaining
+    -- triggered by abuse-detection/concurrency/rapid-write heuristics rather
+    than the hourly quota)."""
     if response.status_code != 403:
         return False
-    remaining = response.headers.get("X-RateLimit-Remaining")
-    return remaining == "0"
+    if response.headers.get("X-RateLimit-Remaining") == "0":
+        return True
+    return "Retry-After" in response.headers
 
 
 def _handle_response(tool: str, response: httpx.Response) -> dict:
@@ -106,14 +119,19 @@ def request(
     """Issue one request to api.github.com and return a structured result:
     {"ok": True, "data": ..., "status_code": ...} on success, or
     {"ok": False, "error": {...}} on any 4xx/5xx/decode failure. Network-level
-    exceptions (timeout, connection refused, DNS failure) are also caught and
-    surfaced as a typed error rather than propagating -- the tool caller
-    always gets a dict back, never an exception."""
+    exceptions (timeout, connection refused, DNS failure) AND malformed-URL
+    errors (e.g. a caller-supplied owner/repo/path containing characters that
+    make the assembled URL invalid) are also caught and surfaced as a typed
+    error rather than propagating -- the tool caller always gets a dict back,
+    never an exception. `httpx.InvalidURL` does not subclass `httpx.HTTPError`
+    (it's raised during URL construction, before any network I/O), so it is
+    listed explicitly -- omitting it would let a bad path/owner/repo value
+    crash the call instead of returning a clean error."""
     url = f"{config.GITHUB_API_BASE}{path}"
     try:
         with httpx.Client(timeout=DEFAULT_TIMEOUT_S) as client:
             response = client.request(method, url, headers=_headers(), params=params, json=json)
-    except httpx.HTTPError as exc:
+    except (httpx.HTTPError, httpx.InvalidURL) as exc:
         return {
             "ok": False,
             "error": {
