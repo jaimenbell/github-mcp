@@ -1,9 +1,35 @@
 # github-mcp
 
-A public read+write MCP server over the GitHub REST API -- built to the
+[![PyPI](https://img.shields.io/pypi/v/jaimenbell-github-mcp)](https://pypi.org/project/jaimenbell-github-mcp/)
+[![MCP Registry](https://img.shields.io/badge/MCP%20Registry-io.github.jaimenbell%2Fgithub--mcp-blue)](https://github.com/jaimenbell/github-mcp/blob/master/server.json)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![tests](https://img.shields.io/badge/tests-74%20passing%20%2F%201%20skipped-brightgreen)](#testing)
+
+A public read+write MCP server over the GitHub REST API, built to the
 [desktop-mcp](https://github.com)/rag-mcp/mcp-factory standard (own
-pyproject, fastmcp server, honest README, real test suite). Env-gated tool
-groups, **write disabled by default**.
+pyproject, fastmcp server, honest README, real test suite) with env-gated
+tool groups (**write disabled by default**). **Not the official GitHub MCP
+server** -- see below.
+
+## Quickstart (60 seconds)
+
+```
+pip install jaimenbell-github-mcp
+```
+
+```jsonc
+// Add to your MCP host config (e.g. Claude Desktop/Code's mcpServers block)
+{
+  "mcpServers": {
+    "github-mcp": {
+      "command": "github-mcp"
+    }
+  }
+}
+```
+
+The `write` tool group (issue/PR mutations) is off by default -- see
+[Env vars](#env-vars) below to enable it.
 
 ## What this is / is not
 
