@@ -6,7 +6,7 @@
 [![tests](https://img.shields.io/badge/tests-74%20passing%20%2F%201%20skipped-brightgreen)](#testing)
 
 A public read+write MCP server over the GitHub REST API, built to the
-[desktop-mcp](https://github.com)/rag-mcp/mcp-factory standard (own
+[desktop-mcp](https://github.com/jaimenbell/desktop-mcp)/rag-mcp/mcp-factory standard (own
 pyproject, fastmcp server, honest README, real test suite) with env-gated
 tool groups (**write disabled by default**). **Not the official GitHub MCP
 server** -- see below.
@@ -42,7 +42,7 @@ read/write MCP servers over external APIs" with a link a client can click.
 **It is NOT the official GitHub MCP server.** It does not aim for parity
 with GitHub's own MCP offering (GraphQL, Actions, webhooks, GitHub Apps are
 all out of scope -- see below). It started life as a factory-scaffolded
-read-only demo ([mcp-factory](https://github.com)'s
+read-only demo ([mcp-factory](https://github.com/jaimenbell/mcp-factory)'s
 `generated/github_read_server.py`) and was hand-hardened into this
 standalone read+write server -- the scaffold-then-harden path is itself part
 of the story this repo tells.
