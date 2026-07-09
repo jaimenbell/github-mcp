@@ -6,7 +6,7 @@
 [![tests](https://img.shields.io/badge/tests-74%20passing%20%2F%201%20skipped-brightgreen)](#testing)
 
 A public read+write MCP server over the GitHub REST API, built to the
-[desktop-mcp](https://github.com/jaimenbell/desktop-mcp)/rag-mcp/mcp-factory standard (own
+[desktop-mcp](https://github.com/jaimenbell/desktop-mcp)/rag-mcp/[mcp-factory](https://github.com/jaimenbell/mcp-factory) standard (own
 pyproject, fastmcp server, honest README, real test suite) with env-gated
 tool groups (**write disabled by default**). **Not the official GitHub MCP
 server** -- see below.
