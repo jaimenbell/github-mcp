@@ -9,6 +9,11 @@ other 4xx/5xx surfaces as a typed `github_api_error` -- never a raw
 exception/crash. A dedicated httpx.Client is created per call so tests can
 respx-mock deterministically without managing a shared client lifecycle
 across the process.
+
+Every request also passes through `ratelimit.RATE_LIMITER` (see
+ratelimit.py) before it's sent -- a proactive client-side throttle so a
+runaway caller can't burn the hourly quota or trip GitHub's secondary
+abuse-detection heuristics before a 403 ever comes back.
 """
 from __future__ import annotations
 
@@ -17,7 +22,7 @@ from typing import Any
 
 import httpx
 
-from . import config
+from . import config, ratelimit
 
 DEFAULT_TIMEOUT_S = 10.0
 
@@ -128,6 +133,7 @@ def request(
     listed explicitly -- omitting it would let a bad path/owner/repo value
     crash the call instead of returning a clean error."""
     url = f"{config.GITHUB_API_BASE}{path}"
+    ratelimit.RATE_LIMITER.before_request()
     try:
         with httpx.Client(timeout=DEFAULT_TIMEOUT_S) as client:
             response = client.request(method, url, headers=_headers(), params=params, json=json)
@@ -140,6 +146,7 @@ def request(
                 "tool": tool,
             },
         }
+    ratelimit.RATE_LIMITER.record_response(response.headers)
     return _handle_response(tool, response)
 
 

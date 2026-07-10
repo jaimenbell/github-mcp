@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import pytest
 
+from github_mcp import ratelimit
+
 _GATE_ENV_VARS = [
     "GITHUB_MCP_ENABLE_WRITE",
     "GITHUB_TOKEN",
+    "GITHUB_MCP_MAX_REQUESTS_PER_SEC",
 ]
 
 
@@ -14,6 +17,15 @@ _GATE_ENV_VARS = [
 def _clean_gate_state(monkeypatch):
     for var in _GATE_ENV_VARS:
         monkeypatch.delenv(var, raising=False)
+    yield
+
+
+@pytest.fixture(autouse=True)
+def _reset_rate_limiter():
+    """The module-level RATE_LIMITER singleton is shared process-wide; reset
+    its bucket/quota state before each test so accumulated calls from other
+    tests never cause a real (even if tiny) sleep here."""
+    ratelimit.RATE_LIMITER.reset()
     yield
 
 
