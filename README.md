@@ -3,7 +3,8 @@
 [![PyPI](https://img.shields.io/pypi/v/jaimenbell-github-mcp)](https://pypi.org/project/jaimenbell-github-mcp/)
 [![MCP Registry](https://img.shields.io/badge/MCP%20Registry-io.github.jaimenbell%2Fgithub--mcp-blue)](https://github.com/jaimenbell/github-mcp/blob/master/server.json)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![tests](https://img.shields.io/badge/tests-86%20passing%20%2F%201%20skipped-brightgreen)](#testing)
+[![tests](https://img.shields.io/badge/tests-97%20passing%20%2F%201%20skipped-brightgreen)](#testing)
+[![CI](https://github.com/jaimenbell/github-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/jaimenbell/github-mcp/actions/workflows/ci.yml)
 
 A public read+write MCP server over the GitHub REST API, built to the
 [desktop-mcp](https://github.com/jaimenbell/desktop-mcp)/rag-mcp/[mcp-factory](https://github.com/jaimenbell/mcp-factory) standard (own
@@ -141,6 +142,10 @@ and test.
 ```
 
 ## Testing
+
+CI (`.github/workflows/ci.yml`) runs this suite on every push/PR and fails
+the build if the Tests badge above drifts from what the suite actually
+reports -- see `scripts/check_readme_counts.py`.
 
 ```
 # unit suite (respx-mocked api.github.com, no real network touched)
