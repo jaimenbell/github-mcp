@@ -181,8 +181,8 @@ pip install -r requirements.txt   # or: pip install .
 {
   "mcpServers": {
     "github-mcp": {
-      "command": "C:\\Users\\jaime\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
-      "args": ["C:\\Users\\jaime\\projects\\github-mcp\\run_server.py"],
+      "command": "C:\\Users\\<you>\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "args": ["C:\\Users\\<you>\\projects\\github-mcp\\run_server.py"],
       "env": {
         "GITHUB_TOKEN": "your-fine-grained-pat-here"
         // GITHUB_MCP_ENABLE_WRITE intentionally absent -- write stays off
