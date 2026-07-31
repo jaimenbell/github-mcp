@@ -48,12 +48,31 @@ read-only demo ([mcp-factory](https://github.com/jaimenbell/mcp-factory)'s
 standalone read+write server -- the scaffold-then-harden path is itself part
 of the story this repo tells.
 
-## Tool groups
+## Tools (14)
 
-| Group | Tools | Default state |
+One row per tool -- the two groups below just control default-on/off state,
+not what exists.
+
+| Tool | Group | What it does |
 |---|---|---|
-| `read` | `get_repo`, `list_issues`, `get_issue`, `list_pull_requests`, `get_pull_request`, `get_file_content`, `search_repos`, `get_user`, `list_commits` | always on, works unauthenticated (GitHub's 60 req/hr tier) |
-| `write` | `create_issue`, `comment_on_issue`, `update_issue_state`, `add_labels`, `create_pr_review_comment` | env-gated, **OFF by default** -- requires `GITHUB_MCP_ENABLE_WRITE=1` **and** `GITHUB_TOKEN` |
+| `get_repo` | `read` | Repo metadata (stars, language, license, default branch, archived flag...) |
+| `list_issues` | `read` | List issues on a repo (PRs filtered out) |
+| `get_issue` | `read` | Fetch a single issue |
+| `list_pull_requests` | `read` | List pull requests on a repo |
+| `get_pull_request` | `read` | Fetch a single pull request |
+| `get_file_content` | `read` | Read a repo file's content (base64-decoded, binary detected not decoded) |
+| `search_repos` | `read` | Search public repositories |
+| `get_user` | `read` | Public user/org profile |
+| `list_commits` | `read` | List commits on a branch/ref |
+| `create_issue` | `write` | Open an issue |
+| `comment_on_issue` | `write` | Comment on an issue/PR |
+| `update_issue_state` | `write` | Open/close an issue |
+| `add_labels` | `write` | Add labels to an issue/PR |
+| `create_pr_review_comment` | `write` | Create a PR review comment on a diff line |
+
+`read` is always on and works unauthenticated (GitHub's 60 req/hr tier).
+`write` is env-gated and **OFF by default** -- requires
+`GITHUB_MCP_ENABLE_WRITE=1` **and** `GITHUB_TOKEN`.
 
 A disabled write call returns a structured `policy_refusal` error (never a
 silent no-op, never a crash). A write call with the group enabled but no
